@@ -5,18 +5,20 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QDialog, QDialog
 from PyQt5 import uic
 from PyQt5.QtWidgets import QInputDialog
 from random import randint
+import PyQt5.QtGui
 
 AUTO_TRANSLATE = ["Google", "Bing", "Tencent"]
 LANGUAGE = ['Английский', 'Немецкий']
 
 
 class Lern_2(QDialog):
-    def __init__(self, id, word, tr, tr_lang):
+    def __init__(self, id, word, tr, tr_lang, repeat=None):
         super().__init__()
         self.id = id
         self.word = word
         self.tr = tr
         self.tr_lang = tr_lang
+        self.repeat = repeat
         uic.loadUi('design/lern_2.ui', self)
         self.translate.setText(self.tr)
         self.question.setText(f"Знаете как переводится слово '{self.word}'?")
@@ -29,34 +31,48 @@ class Lern_2(QDialog):
         self.translate.show()
         self.btn_know.show()
         self.btn_dont_know.show()
+        self.show_translate.hide()
         self.btn_know.clicked.connect(self.know)
         self.btn_dont_know.clicked.connect(self.dont_konw)
 
     def know(self):
-        if self.tr_lang == 'en':
-            self.con = sqlite3.connect('db/ru_en.db')
-        elif self.tr_lang == 'de':
-            self.con = sqlite3.connect('db/ru_de.db')
-        self.cur = self.con.cursor()
-        self.result = self.cur.execute("""UPDATE words
-    SET coeff = 2
-    WHERE id = ?""", (self.id,))
-        self.con.commit()
-        self.con.close()
+        if not self.repeat:
+            if self.tr_lang == 'en':
+                self.con = sqlite3.connect('db/ru_en.db')
+            elif self.tr_lang == 'de':
+                self.con = sqlite3.connect('db/ru_de.db')
+            self.cur = self.con.cursor()
+            self.result = self.cur.execute("""UPDATE words
+        SET coeff = 2
+        WHERE id = ?""", (self.id,))
+            self.con.commit()
+            self.con.close()
         self.close()
 
     def dont_konw(self):
+        if self.repeat:
+            if self.tr_lang == 'en':
+                self.con = sqlite3.connect('db/ru_en.db')
+            elif self.tr_lang == 'de':
+                self.con = sqlite3.connect('db/ru_de.db')
+            self.cur = self.con.cursor()
+            self.result = self.cur.execute("""UPDATE words
+            SET coeff = 1
+            WHERE id = ?""", (self.id,))
+            self.con.commit()
+            self.con.close()
         self.close()
 
 
 class Lern_3(QDialog):
-    def __init__(self, id, word, tr, tr_lang, other):
+    def __init__(self, id, word, tr, tr_lang, other, repeat=None):
         super().__init__()
         self.id = id
         self.word = word
         self.tr = tr
         self.tr_lang = tr_lang
         self.other = other
+        self.repeat = repeat
         uic.loadUi('design/lern_3.ui', self)
         self.question.setText(f"Как переводится слово '{self.word}'?")
         while len(self.other) != 4:
@@ -116,11 +132,12 @@ class Lern_3(QDialog):
         self.cur = self.con.cursor()
 
     def right_ans(self):
-        result = self.cur.execute("""UPDATE words
-        SET coeff = 3
-        WHERE id = ?""", (self.id,))
-        self.con.commit()
-        self.con.close()
+        if not self.repeat:
+            result = self.cur.execute("""UPDATE words
+            SET coeff = 3
+            WHERE id = ?""", (self.id,))
+            self.con.commit()
+            self.con.close()
         self.close()
     def false_ans(self):
         result = self.cur.execute("""UPDATE words
@@ -132,12 +149,13 @@ class Lern_3(QDialog):
 
 
 class Lern_4(QDialog):
-    def __init__(self, id, word, tr, tr_lang):
+    def __init__(self, id, word, tr, tr_lang, repeat=None):
         super().__init__()
         self.id = id
         self.word = word
         self.tr = tr
         self.tr_lang = tr_lang
+        self.repeat = repeat
         uic.loadUi('design/lern_4.ui', self)
         self.error.hide()
         self.question.setText(f"Как переводится слово '{self.word}'?")
@@ -149,7 +167,10 @@ class Lern_4(QDialog):
             if text == self.tr.lower():
                 k = 4
             else:
-                k = 2
+                if self.repeat:
+                    k = 1
+                else:
+                    k = 2
             if self.tr_lang == 'en':
                 self.con = sqlite3.connect('db/ru_en.db')
             elif self.tr_lang == 'de':
@@ -218,6 +239,7 @@ class MyWidget(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('design/lern.ui', self)
+        self.setWindowIcon(PyQt5.QtGui.QIcon(r'C:\Users\Андрей\PycharmProjects\MyProject\design\icon.png'))
         self.change_tr.triggered.connect(self.change_translate_machine)
         self.language.addItems(LANGUAGE)
         self.add_new_word.clicked.connect(self.add_word)
@@ -241,28 +263,26 @@ class MyWidget(QMainWindow):
         elif self.tr_lang == 'de':
             self.con = sqlite3.connect('db/ru_de.db')
         self.cur = self.con.cursor()
-        for i in range(1, 4):
+        for i in range(1, 5):
             result = self.cur.execute("""SELECT id, base_word, translation_word FROM words
     WHERE coeff = ?""", (i,)).fetchall()
             if bool(result):
                 break
         id, word, tr = result[randint(1, len(result)) - 1]
         if i == 1:
-            self.Lern = Lern_2(id, word, tr, self.tr_lang)
-            self.Lern.show()
+            self.open_lern2_win(id, word, tr)
         elif i == 2:
-            other = []
-            for n in result:
-                if n[2] != tr:
-                    other.append(n[2])
-                if len(other) == 4:
-                    break
-            self.Lern = Lern_3(id, word, tr, self.tr_lang, other)
-            self.Lern.show()
+            self.open_lern3_win(id, word, tr, result)
         elif i == 3:
-            self.Lern = Lern_4(id, word, tr, self.tr_lang)
-            self.Lern.show()
-
+            self.open_lern4_win(id, word, tr)
+        elif i == 4:
+            chose_var = randint(1, 3)
+            if chose_var == 1:
+                self.open_lern2_win(id, word, tr, rp=True)
+            elif chose_var == 2:
+                self.open_lern3_win(id, word, tr, result, rp=True)
+            elif chose_var == 3:
+                self.open_lern4_win(id, word, tr, rp=True)
     def get_lang(self):
         lang = self.language.currentText()
         if lang == 'Английский':
@@ -270,6 +290,24 @@ class MyWidget(QMainWindow):
         elif lang == 'Немецкий':
             tr_lang = 'de'
         return tr_lang
+
+    def open_lern2_win(self, id, word, tr, rp=None):
+        self.Lern = Lern_2(id, word, tr, self.tr_lang, repeat=rp)
+        self.Lern.show()
+
+    def open_lern3_win(self, id, word, tr, result, rp=None):
+        other = []
+        for n in result:
+            if n[2] != tr:
+                other.append(n[2])
+            if len(other) == 4:
+                break
+        self.Lern = Lern_3(id, word, tr, self.tr_lang, other, repeat=rp)
+        self.Lern.show()
+
+    def open_lern4_win(self, id, word, tr, rp=None):
+        self.Lern = Lern_4(id, word, tr, self.tr_lang, repeat=rp)
+        self.Lern.show()
 
     def closeEvent(self, event):
         try:
