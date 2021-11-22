@@ -239,7 +239,7 @@ class MyWidget(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('design/lern.ui', self)
-        self.setWindowIcon(PyQt5.QtGui.QIcon(r'C:\Users\Андрей\PycharmProjects\MyProject\design\icon.png'))
+        self.setWindowIcon(PyQt5.QtGui.QIcon(r'design\icon.png'))
         self.change_tr.triggered.connect(self.change_translate_machine)
         self.language.addItems(LANGUAGE)
         self.add_new_word.clicked.connect(self.add_word)
