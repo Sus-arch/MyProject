@@ -1,7 +1,7 @@
 import sys
 import sqlite3
 import translators as ts
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QDialog, QDialogButtonBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QDialog, QDialogButtonBox, QTableWidgetItem
 from PyQt5 import uic
 from PyQt5.QtWidgets import QInputDialog
 from random import randint
@@ -235,6 +235,30 @@ class AddNewWordWindow(QDialog):
             pass
 
 
+class AllWordsWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('design/show_all_words.ui', self)
+        self.lang.addItems(LANGUAGE)
+        self.run.clicked.connect(self.show_all_words)
+
+    def show_all_words(self):
+        self.show_table.setColumnCount(6)
+        self.show_table.setHorizontalHeaderLabels(['id', 'слово', 'перевод', 'коэффицент изучения',
+                                                   'другие варианты перевода', 'пример'])
+        self.show_table.setRowCount(0)
+        if self.lang.currentIndex() == 0:
+            self.con = sqlite3.connect('db/ru_en.db')
+        elif self.lang.currentIndex() == 1:
+            self.con = sqlite3.connect('db/ru_de.db')
+        self.cur = self.con.cursor()
+        self.result = self.cur.execute("""SELECT * FROM words""").fetchall()
+        for i, row in enumerate(self.result):
+            self.show_table.setRowCount(self.show_table.rowCount() + 1)
+            for j, elem in enumerate(row):
+                self.show_table.setItem(i, j, QTableWidgetItem(str(elem)))
+
+
 class MyWidget(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -245,11 +269,16 @@ class MyWidget(QMainWindow):
         self.add_new_word.clicked.connect(self.add_word)
         self.lern_words.clicked.connect(self.lern)
         self.tr_machine = AUTO_TRANSLATE[0]
+        self.show_all_word.triggered.connect(self.show_words)
 
     def change_translate_machine(self):
         self.tr_machine = QInputDialog.getItem(self, "Выберите автоматический перводчик",
                                                "Выберите автоматический перводчик", AUTO_TRANSLATE,
                                                AUTO_TRANSLATE.index(self.tr_machine), False)[0]
+
+    def show_words(self):
+        self.AllWords = AllWordsWindow()
+        self.AllWords.show()
 
     def add_word(self):
         self.tr_lang = self.get_lang()

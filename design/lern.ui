@@ -38,15 +38,15 @@
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="1" column="1">
-       <widget class="QPushButton" name="add_new_word">
+      <item row="2" column="0">
+       <widget class="QLabel" name="label">
         <property name="font">
          <font>
           <pointsize>14</pointsize>
          </font>
         </property>
         <property name="text">
-         <string>Добавить</string>
+         <string>Учить новые слова</string>
         </property>
        </widget>
       </item>
@@ -71,18 +71,6 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_3">
-        <property name="font">
-         <font>
-          <pointsize>14</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Выберите язык обучения</string>
-        </property>
-       </widget>
-      </item>
       <item row="2" column="1">
        <widget class="QPushButton" name="lern_words">
         <property name="font">
@@ -95,15 +83,27 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label">
+      <item row="1" column="1">
+       <widget class="QPushButton" name="add_new_word">
         <property name="font">
          <font>
           <pointsize>14</pointsize>
          </font>
         </property>
         <property name="text">
-         <string>Учить новые слова</string>
+         <string>Добавить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Выберите язык обучения</string>
         </property>
        </widget>
       </item>
@@ -120,18 +120,30 @@
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu">
+   <widget class="QMenu" name="settings">
     <property name="title">
      <string>Настройки</string>
     </property>
     <addaction name="change_tr"/>
    </widget>
-   <addaction name="menu"/>
+   <widget class="QMenu" name="more">
+    <property name="title">
+     <string>Ещё</string>
+    </property>
+    <addaction name="show_all_word"/>
+   </widget>
+   <addaction name="settings"/>
+   <addaction name="more"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="change_tr">
    <property name="text">
     <string>Изменить автоматический переводчик</string>
+   </property>
+  </action>
+  <action name="show_all_word">
+   <property name="text">
+    <string>Посмотреть все слова</string>
    </property>
   </action>
  </widget>
