@@ -1,7 +1,7 @@
 import sys
 import sqlite3
 import translators as ts
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QDialog, QDialogButtonBox, QTableWidgetItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QTableWidgetItem, QErrorMessage
 from PyQt5 import uic
 from PyQt5.QtWidgets import QInputDialog
 from random import randint
@@ -241,22 +241,82 @@ class AllWordsWindow(QDialog):
         uic.loadUi('design/show_all_words.ui', self)
         self.lang.addItems(LANGUAGE)
         self.run.clicked.connect(self.show_all_words)
+        self.change_btn.hide()
+        self.delete_btn.hide()
 
     def show_all_words(self):
-        self.show_table.setColumnCount(6)
-        self.show_table.setHorizontalHeaderLabels(['id', 'слово', 'перевод', 'коэффицент изучения',
-                                                   'другие варианты перевода', 'пример'])
-        self.show_table.setRowCount(0)
+        self.change_btn.show()
+        self.delete_btn.show()
         if self.lang.currentIndex() == 0:
             self.con = sqlite3.connect('db/ru_en.db')
         elif self.lang.currentIndex() == 1:
             self.con = sqlite3.connect('db/ru_de.db')
         self.cur = self.con.cursor()
+        self.table()
+        self.change_btn.clicked.connect(self.change_value)
+        self.delete_btn.clicked.connect(self.delete_value)
+
+    def change_value(self):
+        try:
+            new_text = self.show_table.currentItem().text()
+            if self.show_table.currentColumn() == 0 or self.show_table.currentColumn() == 3:
+                error_editible = QErrorMessage(self)
+                error_editible.showMessage("Этот параметр нельзя изменять")
+            else:
+                word_id = self.show_table.item(self.show_table.currentRow(), 0).text()
+                if not bool(new_text):
+                    new_text = None
+                if new_text == 'None':
+                    new_text = None
+                if self.show_table.currentColumn() == 1:
+                    result = self.cur.execute("""UPDATE words
+    SET base_word = ?
+    WHERE id = ? """, (new_text, word_id,))
+                elif self.show_table.currentColumn() == 2:
+                    result = self.cur.execute("""UPDATE words
+                    SET translation_word = ?
+                    WHERE id = ? """, (new_text, word_id,))
+                elif self.show_table.currentColumn() == 4:
+                    result = self.cur.execute("""UPDATE words
+                                    SET more_translation = ?
+                                    WHERE id = ? """, (new_text, word_id,))
+                elif self.show_table.currentColumn() == 5:
+                    result = self.cur.execute("""UPDATE words
+                                    SET example = ?
+                                    WHERE id = ? """, (new_text, word_id,))
+                self.con.commit()
+            self.table()
+        except AttributeError:
+            error = QErrorMessage(self)
+            error.showMessage("Вы не выбрали слово")
+
+    def delete_value(self):
+        try:
+            row_id = self.show_table.item(self.show_table.currentRow(), 0).text()
+            result = self.cur.execute("""DELETE FROM words
+    WHERE id = ?""", (row_id, ))
+            self.con.commit()
+            self.table()
+        except AttributeError:
+            error = QErrorMessage(self)
+            error.showMessage("Вы не выбрали слово")
+
+    def table(self):
+        self.show_table.setColumnCount(6)
+        self.show_table.setHorizontalHeaderLabels(['id', 'слово', 'перевод', 'коэффицент изучения',
+                                                   'другие варианты перевода', 'пример'])
+        self.show_table.setRowCount(0)
         self.result = self.cur.execute("""SELECT * FROM words""").fetchall()
         for i, row in enumerate(self.result):
             self.show_table.setRowCount(self.show_table.rowCount() + 1)
             for j, elem in enumerate(row):
                 self.show_table.setItem(i, j, QTableWidgetItem(str(elem)))
+
+    def closeEvent(self, event):
+        try:
+            self.con.close()
+        except AttributeError:
+            pass
 
 
 class MyWidget(QMainWindow):
@@ -301,7 +361,7 @@ class MyWidget(QMainWindow):
         if i == 1:
             self.open_lern2_win(id, word, tr)
         elif i == 2:
-            self.open_lern3_win(id, word, tr, result)
+            self.open_lern3_win(id, word, tr)
         elif i == 3:
             self.open_lern4_win(id, word, tr)
         elif i == 4:
@@ -309,9 +369,10 @@ class MyWidget(QMainWindow):
             if chose_var == 1:
                 self.open_lern2_win(id, word, tr, rp=True)
             elif chose_var == 2:
-                self.open_lern3_win(id, word, tr, result, rp=True)
+                self.open_lern3_win(id, word, tr, rp=True)
             elif chose_var == 3:
                 self.open_lern4_win(id, word, tr, rp=True)
+
     def get_lang(self):
         lang = self.language.currentText()
         if lang == 'Английский':
@@ -324,12 +385,14 @@ class MyWidget(QMainWindow):
         self.Lern = Lern_2(id, word, tr, self.tr_lang, repeat=rp)
         self.Lern.show()
 
-    def open_lern3_win(self, id, word, tr, result, rp=None):
+    def open_lern3_win(self, id, word, tr, rp=None):
         other = []
+        result = self.cur.execute("""SELECT translation_word FROM words
+ORDER BY random()""").fetchall()
         for n in result:
-            if n[2] != tr:
-                other.append(n[2])
-            if len(other) == 4:
+            if n[0] != tr:
+                other.append(n[0])
+            if len(other) == 3:
                 break
         self.Lern = Lern_3(id, word, tr, self.tr_lang, other, repeat=rp)
         self.Lern.show()
