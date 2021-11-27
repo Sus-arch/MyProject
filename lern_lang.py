@@ -243,6 +243,8 @@ class AllWordsWindow(QDialog):
         self.run.clicked.connect(self.show_all_words)
         self.change_btn.hide()
         self.delete_btn.hide()
+        self.change_btn.clicked.connect(self.change_value)
+        self.delete_btn.clicked.connect(self.delete_value)
 
     def show_all_words(self):
         self.change_btn.show()
@@ -253,8 +255,6 @@ class AllWordsWindow(QDialog):
             self.con = sqlite3.connect('db/ru_de.db')
         self.cur = self.con.cursor()
         self.table()
-        self.change_btn.clicked.connect(self.change_value)
-        self.delete_btn.clicked.connect(self.delete_value)
 
     def change_value(self):
         try:
@@ -330,6 +330,20 @@ class MyWidget(QMainWindow):
         self.lern_words.clicked.connect(self.lern)
         self.tr_machine = AUTO_TRANSLATE[0]
         self.show_all_word.triggered.connect(self.show_words)
+        self.language.activated.connect(self.change_status)
+
+    def change_status(self):
+        self.tr_lang = self.get_lang()
+        if self.tr_lang == 'en':
+            self.con = sqlite3.connect('db/ru_en.db')
+        elif self.tr_lang == 'de':
+            self.con = sqlite3.connect('db/ru_de.db')
+        self.cur = self.con.cursor()
+        allwords = self.cur.execute("""SELECT * FROM words""").fetchall()
+        lernwords = self.cur.execute("""SELECT * FROM words 
+    WHERE coeff = 4""").fetchall()
+        res = len(lernwords) / len(allwords) * 100
+        self.progress.setValue(round(res))
 
     def change_translate_machine(self):
         self.tr_machine = QInputDialog.getItem(self, "Выберите автоматический перводчик",
@@ -414,6 +428,7 @@ def except_hook(cls, exception, traceback):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    app.setStyle('Fusion')
     ex = MyWidget()
     ex.show()
     sys.excepthook = except_hook
