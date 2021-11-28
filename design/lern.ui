@@ -246,6 +246,7 @@
      <string>Ещё</string>
     </property>
     <addaction name="show_all_word"/>
+    <addaction name="view_statistik"/>
    </widget>
    <addaction name="settings"/>
    <addaction name="more"/>
@@ -259,6 +260,11 @@
   <action name="show_all_word">
    <property name="text">
     <string>Посмотреть все слова</string>
+   </property>
+  </action>
+  <action name="view_statistik">
+   <property name="text">
+    <string>Посмотреть статистику</string>
    </property>
   </action>
  </widget>

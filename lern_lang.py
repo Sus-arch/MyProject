@@ -6,6 +6,9 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QInputDialog
 from random import randint
 import PyQt5.QtGui
+import pymorphy2
+import datetime
+
 
 AUTO_TRANSLATE = ["Google", "Bing", "Tencent"]
 LANGUAGE = ['Английский', 'Немецкий']
@@ -21,19 +24,19 @@ class Lern_2(QDialog):
         self.repeat = repeat
         uic.loadUi('design/lern_2.ui', self)
         self.translate.setText(self.tr)
-        self.question.setText(f"Знаете как переводится слово '{self.word}'?")
+        self.question.setText(f"Знаете как переводится слово '{self.word.capitalize()}'?")
         self.translate.hide()
         self.btn_know.hide()
         self.btn_dont_know.hide()
         self.show_translate.clicked.connect(self.show_tr)
+        self.btn_know.clicked.connect(self.know)
+        self.btn_dont_know.clicked.connect(self.dont_konw)
 
     def show_tr(self):
         self.translate.show()
         self.btn_know.show()
         self.btn_dont_know.show()
         self.show_translate.hide()
-        self.btn_know.clicked.connect(self.know)
-        self.btn_dont_know.clicked.connect(self.dont_konw)
 
     def know(self):
         if not self.repeat:
@@ -74,43 +77,47 @@ class Lern_3(QDialog):
         self.other = other
         self.repeat = repeat
         uic.loadUi('design/lern_3.ui', self)
-        self.question.setText(f"Как переводится слово '{self.word}'?")
+        self.question.setText(f"Как переводится слово '{self.word.capitalize()}'?")
         while len(self.other) != 4:
             self.other.append('')
         number = randint(1, 4)
         if number == 1:
-            self.answer1.setText(self.tr)
-            self.answer2.setText(self.other[0])
-            self.answer3.setText(self.other[1])
-            self.answer4.setText(self.other[2])
+            self.answer1.setText(self.tr.capitalize())
+            self.answer2.setText(self.other[0].capitalize())
+            self.answer3.setText(self.other[1].capitalize())
+            self.answer4.setText(self.other[2].capitalize())
+
             self.answer1.clicked.connect(self.right_ans)
             self.answer2.clicked.connect(self.false_ans)
             self.answer3.clicked.connect(self.false_ans)
             self.answer4.clicked.connect(self.false_ans)
 
         elif number == 2:
-            self.answer2.setText(self.tr)
-            self.answer4.setText(self.other[0])
-            self.answer3.setText(self.other[1])
-            self.answer1.setText(self.other[2])
+            self.answer2.setText(self.tr.capitalize())
+            self.answer4.setText(self.other[0].capitalize())
+            self.answer3.setText(self.other[1].capitalize())
+            self.answer1.setText(self.other[2].capitalize())
+
             self.answer2.clicked.connect(self.right_ans)
             self.answer1.clicked.connect(self.false_ans)
             self.answer3.clicked.connect(self.false_ans)
             self.answer4.clicked.connect(self.false_ans)
         elif number == 3:
-            self.answer3.setText(self.tr)
-            self.answer1.setText(self.other[0])
-            self.answer4.setText(self.other[1])
-            self.answer2.setText(self.other[2])
+            self.answer3.setText(self.tr.capitalize())
+            self.answer1.setText(self.other[0].capitalize())
+            self.answer4.setText(self.other[1].capitalize())
+            self.answer2.setText(self.other[2].capitalize())
+
             self.answer3.clicked.connect(self.right_ans)
             self.answer2.clicked.connect(self.false_ans)
             self.answer1.clicked.connect(self.false_ans)
             self.answer4.clicked.connect(self.false_ans)
         else:
-            self.answer4.setText(self.tr)
-            self.answer3.setText(self.other[0])
-            self.answer1.setText(self.other[1])
-            self.answer2.setText(self.other[2])
+            self.answer4.setText(self.tr.capitalize())
+            self.answer3.setText(self.other[0].capitalize())
+            self.answer1.setText(self.other[1].capitalize())
+            self.answer2.setText(self.other[2].capitalize())
+
             self.answer4.clicked.connect(self.right_ans)
             self.answer2.clicked.connect(self.false_ans)
             self.answer3.clicked.connect(self.false_ans)
@@ -158,7 +165,7 @@ class Lern_4(QDialog):
         self.repeat = repeat
         uic.loadUi('design/lern_4.ui', self)
         self.error.hide()
-        self.question.setText(f"Как переводится слово '{self.word}'?")
+        self.question.setText(f"Как переводится слово '{self.word.capitalize()}'?")
         self.btn_ok.clicked.connect(self.run)
 
     def run(self):
@@ -201,11 +208,13 @@ class AddNewWordWindow(QDialog):
             self.con = sqlite3.connect('db/ru_en.db')
         elif self.tr_lang == 'de':
             self.con = sqlite3.connect('db/ru_de.db')
+
         self.cur = self.con.cursor()
         word = self.word.text()
         translate = self.translate.text()
         oth_translate = self.other_translate.text()
         example = self.example.text()
+
         if not bool(translate):
             if self.tr_machine == 'Google':
                 translate = ts.google(word, from_language=self.tr_lang, to_language='ru')
@@ -222,11 +231,12 @@ class AddNewWordWindow(QDialog):
         if bool(word) and bool(translate):
             add = self.cur.execute(f"""INSERT INTO words(base_word, 
             translation_word, coeff, more_translation, example) VALUES(?, ?, 1, ?, ?)""",
-                                   (word, translate, oth_translate, example,))
+                                   (word.capitalize(), translate.capitalize(), oth_translate, example,))
             self.con.commit()
             self.close()
         else:
-            self.error.setText('Вы не ввели слово')
+            error = QErrorMessage(self)
+            error.showMessage('Вы не ввели слово')
 
     def closeEvent(self, event):
         try:
@@ -249,10 +259,12 @@ class AllWordsWindow(QDialog):
     def show_all_words(self):
         self.change_btn.show()
         self.delete_btn.show()
+
         if self.lang.currentIndex() == 0:
             self.con = sqlite3.connect('db/ru_en.db')
         elif self.lang.currentIndex() == 1:
             self.con = sqlite3.connect('db/ru_de.db')
+
         self.cur = self.con.cursor()
         self.table()
 
@@ -276,16 +288,20 @@ class AllWordsWindow(QDialog):
                     result = self.cur.execute("""UPDATE words
                     SET translation_word = ?
                     WHERE id = ? """, (new_text, word_id,))
+
                 elif self.show_table.currentColumn() == 4:
                     result = self.cur.execute("""UPDATE words
                                     SET more_translation = ?
                                     WHERE id = ? """, (new_text, word_id,))
+
                 elif self.show_table.currentColumn() == 5:
                     result = self.cur.execute("""UPDATE words
                                     SET example = ?
                                     WHERE id = ? """, (new_text, word_id,))
+
                 self.con.commit()
             self.table()
+
         except AttributeError:
             error = QErrorMessage(self)
             error.showMessage("Вы не выбрали слово")
@@ -319,6 +335,42 @@ class AllWordsWindow(QDialog):
             pass
 
 
+class StatWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('design/view_statistik.ui', self)
+        word = pymorphy2.MorphAnalyzer().parse('слово')[0]
+        for i in range(len(LANGUAGE)):
+            self.show_stat.append(f"{i + 1}) {LANGUAGE[i]} язык")
+            if i == 0:
+                self.con = sqlite3.connect('db/ru_en.db')
+            elif i == 1:
+                self.con = sqlite3.connect('db/ru_de.db')
+            self.cur = self.con.cursor()
+            result = self.cur.execute("""SELECT id FROM words""").fetchall()
+            number_all_words = len(result)
+            self.show_stat.append(f"Всего добавлено {number_all_words} {word.make_agree_with_number(number_all_words).word}")
+            result = self.cur.execute("""SELECT id FROM words 
+            WHERE coeff = 4""").fetchall()
+            number_lerned_words = len(result)
+            try:
+                prozent = round(number_lerned_words / number_all_words * 100)
+            except ZeroDivisionError:
+                prozent = 0
+            self.show_stat.append(f"Всего выучено {number_lerned_words} {word.make_agree_with_number(number_lerned_words).word}({prozent}%)")
+            self.show_stat.append('\n')
+
+    def closeEvent(self, event):
+        text = self.show_stat.toPlainText()
+        if bool(text):
+            with open('log.txt', mode='a', encoding='utf-8') as file:
+                data = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                file.write(data)
+                file.write('\n')
+                file.write(text)
+                file.write('\n')
+
+
 class MyWidget(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -330,7 +382,14 @@ class MyWidget(QMainWindow):
         self.lern_words.clicked.connect(self.lern)
         self.tr_machine = AUTO_TRANSLATE[0]
         self.show_all_word.triggered.connect(self.show_words)
+        self.view_statistik.triggered.connect(self.show_statistik)
         self.language.activated.connect(self.change_status)
+        self.change_status()
+
+    def show_statistik(self):
+        self.statistik_show = StatWindow()
+        self.statistik_show.show()
+        self.statistik_show.setWindowTitle('Просмотр стастистики')
 
     def change_status(self):
         self.tr_lang = self.get_lang()
@@ -342,8 +401,11 @@ class MyWidget(QMainWindow):
         allwords = self.cur.execute("""SELECT * FROM words""").fetchall()
         lernwords = self.cur.execute("""SELECT * FROM words 
     WHERE coeff = 4""").fetchall()
-        res = len(lernwords) / len(allwords) * 100
-        self.progress.setValue(round(res))
+        try:
+            res = len(lernwords) / len(allwords) * 100
+            self.progress.setValue(round(res))
+        except ZeroDivisionError:
+            self.progress.setValue(0)
 
     def change_translate_machine(self):
         self.tr_machine = QInputDialog.getItem(self, "Выберите автоматический перводчик",
@@ -353,11 +415,15 @@ class MyWidget(QMainWindow):
     def show_words(self):
         self.AllWords = AllWordsWindow()
         self.AllWords.show()
+        self.AllWords.setWindowTitle('Просмотр всех слов')
+        self.change_status()
 
     def add_word(self):
         self.tr_lang = self.get_lang()
         self.new_word_win = AddNewWordWindow(self.tr_lang, self.tr_machine)
         self.new_word_win.show()
+        self.new_word_win.setWindowTitle('Добавление нового слова')
+        self.change_status()
 
     def lern(self):
         self.tr_lang = self.get_lang()
@@ -371,21 +437,26 @@ class MyWidget(QMainWindow):
     WHERE coeff = ?""", (i,)).fetchall()
             if bool(result):
                 break
-        id, word, tr = result[randint(1, len(result)) - 1]
-        if i == 1:
-            self.open_lern2_win(id, word, tr)
-        elif i == 2:
-            self.open_lern3_win(id, word, tr)
-        elif i == 3:
-            self.open_lern4_win(id, word, tr)
-        elif i == 4:
-            chose_var = randint(1, 3)
-            if chose_var == 1:
-                self.open_lern2_win(id, word, tr, rp=True)
-            elif chose_var == 2:
-                self.open_lern3_win(id, word, tr, rp=True)
-            elif chose_var == 3:
-                self.open_lern4_win(id, word, tr, rp=True)
+        if bool(result):
+            id, word, tr = result[randint(1, len(result)) - 1]
+            if i == 1:
+                self.open_lern2_win(id, word, tr)
+            elif i == 2:
+                self.open_lern3_win(id, word, tr)
+            elif i == 3:
+                self.open_lern4_win(id, word, tr)
+            elif i == 4:
+                chose_var = randint(1, 3)
+                if chose_var == 1:
+                    self.open_lern2_win(id, word, tr, rp=True)
+                elif chose_var == 2:
+                    self.open_lern3_win(id, word, tr, rp=True)
+                elif chose_var == 3:
+                    self.open_lern4_win(id, word, tr, rp=True)
+            self.change_status()
+        else:
+            error = QErrorMessage(self)
+            error.showMessage('Вы не добавили ни одного слова')
 
     def get_lang(self):
         lang = self.language.currentText()
@@ -398,6 +469,7 @@ class MyWidget(QMainWindow):
     def open_lern2_win(self, id, word, tr, rp=None):
         self.Lern = Lern_2(id, word, tr, self.tr_lang, repeat=rp)
         self.Lern.show()
+        self.Lern.setWindowTitle('Обучение 1')
 
     def open_lern3_win(self, id, word, tr, rp=None):
         other = []
@@ -410,16 +482,20 @@ ORDER BY random()""").fetchall()
                 break
         self.Lern = Lern_3(id, word, tr, self.tr_lang, other, repeat=rp)
         self.Lern.show()
+        self.Lern.setWindowTitle('Обучение 2')
 
     def open_lern4_win(self, id, word, tr, rp=None):
         self.Lern = Lern_4(id, word, tr, self.tr_lang, repeat=rp)
         self.Lern.show()
+        self.Lern.setWindowTitle('Обучение 3')
 
     def closeEvent(self, event):
         try:
             self.con.close()
         except AttributeError:
             pass
+        finally:
+            self.change_status()
 
 
 def except_hook(cls, exception, traceback):
