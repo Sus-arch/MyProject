@@ -229,14 +229,19 @@ class AddNewWordWindow(QDialog):
         if not bool(example):
             example = None
         if bool(word) and bool(translate):
-            add = self.cur.execute(f"""INSERT INTO words(base_word, 
-            translation_word, coeff, more_translation, example) VALUES(?, ?, 1, ?, ?)""",
-                                   (word.capitalize(), translate.capitalize(), oth_translate, example,))
-            self.con.commit()
-            self.close()
+            try:
+                add = self.cur.execute(f"""INSERT INTO words(base_word, 
+                translation_word, coeff, more_translation, example) VALUES(?, ?, 1, ?, ?)""",
+                                       (word.capitalize(), translate.capitalize(), oth_translate, example,))
+                self.con.commit()
+                self.close()
+            except sqlite3.IntegrityError:
+                error = QErrorMessage(self)
+                error.showMessage('Это слово уже добавлено')
         else:
             error = QErrorMessage(self)
             error.showMessage('Вы не ввели слово')
+
 
     def closeEvent(self, event):
         try:

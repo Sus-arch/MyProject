@@ -35,7 +35,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Введите слово</string>
+       <string>Введите слово на иностранном языке</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
