@@ -6,7 +6,6 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import QInputDialog
 from random import randint
 import PyQt5.QtGui
-import pymorphy2
 import datetime
 
 
@@ -344,7 +343,6 @@ class StatWindow(QDialog):
     def __init__(self):
         super().__init__()
         uic.loadUi('design/view_statistik.ui', self)
-        word = pymorphy2.MorphAnalyzer().parse('слово')[0]
         for i in range(len(LANGUAGE)):
             self.show_stat.append(f"{i + 1}) {LANGUAGE[i]} язык")
             if i == 0:
@@ -354,7 +352,7 @@ class StatWindow(QDialog):
             self.cur = self.con.cursor()
             result = self.cur.execute("""SELECT id FROM words""").fetchall()
             number_all_words = len(result)
-            self.show_stat.append(f"Всего добавлено {number_all_words} {word.make_agree_with_number(number_all_words).word}")
+            self.show_stat.append(f"Всего добавлено слов: {number_all_words}")
             result = self.cur.execute("""SELECT id FROM words 
             WHERE coeff = 4""").fetchall()
             number_lerned_words = len(result)
@@ -362,7 +360,14 @@ class StatWindow(QDialog):
                 prozent = round(number_lerned_words / number_all_words * 100)
             except ZeroDivisionError:
                 prozent = 0
-            self.show_stat.append(f"Всего выучено {number_lerned_words} {word.make_agree_with_number(number_lerned_words).word}({prozent}%)")
+            self.show_stat.append(f"Всего выучено слов: {number_lerned_words} ({prozent}%)")
+            result = self.cur.execute("""SELECT id FROM words WHERE coeff = 3""").fetchall()
+            words_coeff3 = len(result)
+            try:
+                prozent = round(words_coeff3 / number_all_words * 100)
+            except ZeroDivisionError:
+                prozent = 0
+            self.show_stat.append(f"Почти выучено слов: {words_coeff3} ({prozent}%)")
             self.show_stat.append('\n')
 
     def closeEvent(self, event):
@@ -395,6 +400,7 @@ class MyWidget(QMainWindow):
         self.statistik_show = StatWindow()
         self.statistik_show.show()
         self.statistik_show.setWindowTitle('Просмотр стастистики')
+        self.statistik_show.setWindowIcon(PyQt5.QtGui.QIcon(r'design\icon.png'))
 
     def change_status(self):
         self.tr_lang = self.get_lang()
@@ -422,6 +428,7 @@ class MyWidget(QMainWindow):
         self.AllWords.show()
         self.AllWords.setWindowTitle('Просмотр всех слов')
         self.change_status()
+        self.AllWords.setWindowIcon(PyQt5.QtGui.QIcon(r'design\icon.png'))
 
     def add_word(self):
         self.tr_lang = self.get_lang()
@@ -429,6 +436,7 @@ class MyWidget(QMainWindow):
         self.new_word_win.show()
         self.new_word_win.setWindowTitle('Добавление нового слова')
         self.change_status()
+        self.new_word_win.setWindowIcon(PyQt5.QtGui.QIcon(r'design\icon.png'))
 
     def lern(self):
         self.tr_lang = self.get_lang()
@@ -475,6 +483,7 @@ class MyWidget(QMainWindow):
         self.Lern = Lern_2(id, word, tr, self.tr_lang, repeat=rp)
         self.Lern.show()
         self.Lern.setWindowTitle('Обучение 1')
+        self.Lern.setWindowIcon(PyQt5.QtGui.QIcon(r'design\icon.png'))
 
     def open_lern3_win(self, id, word, tr, rp=None):
         other = []
@@ -488,11 +497,13 @@ ORDER BY random()""").fetchall()
         self.Lern = Lern_3(id, word, tr, self.tr_lang, other, repeat=rp)
         self.Lern.show()
         self.Lern.setWindowTitle('Обучение 2')
+        self.Lern.setWindowIcon(PyQt5.QtGui.QIcon(r'design\icon.png'))
 
     def open_lern4_win(self, id, word, tr, rp=None):
         self.Lern = Lern_4(id, word, tr, self.tr_lang, repeat=rp)
         self.Lern.show()
         self.Lern.setWindowTitle('Обучение 3')
+        self.Lern.setWindowIcon(PyQt5.QtGui.QIcon(r'design\icon.png'))
 
     def closeEvent(self, event):
         try:
